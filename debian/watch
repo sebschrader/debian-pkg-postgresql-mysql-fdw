@@ -1,0 +1,4 @@
+version=3
+opts=uversionmangle=s/(\d+)_(\d+)_(\d+)/$1.$2.$3/ \
+ https://github.com/EnterpriseDB/mysql_fdw/releases \
+ .*/mysql_fdw/archive/REL-([\d_].*)\.(?:tgz|tbz|txz|(?:tar\.(?:gz|bz2|xz)))

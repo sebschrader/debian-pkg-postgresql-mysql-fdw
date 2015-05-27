@@ -1,0 +1,41 @@
+Source: postgresql-mysql-fdw
+Section: database
+Priority: optional
+Maintainer: Debian PostgreSQL Maintainers <pkg-postgresql-public@lists.alioth.debian.org>
+Uploaders: Markus Wanner <markus.wanner@datahouse.ch>
+Build-Depends: debhelper (>= 9),
+ postgresql-server-dev-all (>= 153~),
+ libmysqlclient-dev
+Standards-Version: 3.9.6
+Homepage: https://github.com/EnterpriseDB/mysql_fdw
+Vcs-Git: git://anonscm.debian.org/pkg-postgresql/postgresql-mysql-fdw.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-postgresql/postgresql-mysql-fdw.git
+
+Package: postgresql-mysql-fdw-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Description: documentation for mysql-fdw
+ postgresql-mysql-fdw is a PostgreSQL extension implementing a Foreign Data
+ Wrapper (FDW) to access MySQL data from PostgreSQL.
+ .
+ This package contains the documentation.
+
+Package: postgresql-9.3-mysql-fdw
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, postgresql-9.3
+Description: Postgres 9.3 Foreign Data Wrapper for MySQL
+ postgresql-mysql-fdw is a PostgreSQL extension implementing a Foreign Data
+ Wrapper (FDW) to access MySQL data from PostgreSQL.
+ .
+ This package is for PostgreSQL 9.3.
+
+Package: postgresql-9.4-mysql-fdw
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, postgresql-9.4
+Description: Postgres 9.4 Foreign Data Wrapper for MySQL
+ postgresql-mysql-fdw is a PostgreSQL extension implementing a Foreign Data
+ Wrapper (FDW) to access MySQL data from PostgreSQL.
+ .
+ This package is for PostgreSQL 9.4.
+
