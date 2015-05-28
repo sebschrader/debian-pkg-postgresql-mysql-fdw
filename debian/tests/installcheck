@@ -1,0 +1,20 @@
+#!/bin/sh
+
+(
+    set -eu
+
+    # Create the MySQL test database and user.
+    echo "== creating the MySQL test database"
+    cat $PWD/debian/mysql.testschema.sql | mysql -vv --user=root mysql
+
+    pg_buildext -i '--auth-local=trust' installcheck
+)
+status=$?
+
+(
+    # Cleanup the MySQL test database (even in case of an error above)
+    echo "== dropping the MySQL test database"
+    echo "DROP USER 'foo'@'127.0.0.1'; DROP DATABASE testdb;" \
+     | mysql -vv --user=root mysql
+)
+exit $status

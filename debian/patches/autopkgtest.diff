@@ -1,0 +1,16 @@
+--- a/sql/mysql_fdw.sql
++++ b/sql/mysql_fdw.sql
+@@ -1,4 +1,4 @@
+-\c postgres postgres
++\c contrib_regression postgres
+ CREATE EXTENSION mysql_fdw;
+ CREATE SERVER mysql_svr FOREIGN DATA WRAPPER mysql_fdw;
+ CREATE USER MAPPING FOR postgres SERVER mysql_svr OPTIONS(username 'foo', password 'bar');
+--- a/expected/mysql_fdw.out
++++ b/expected/mysql_fdw.out
+@@ -1,4 +1,4 @@
+-\c postgres postgres
++\c contrib_regression postgres
+ CREATE EXTENSION mysql_fdw;
+ CREATE SERVER mysql_svr FOREIGN DATA WRAPPER mysql_fdw;
+ CREATE USER MAPPING FOR postgres SERVER mysql_svr OPTIONS(username 'foo', password 'bar');
