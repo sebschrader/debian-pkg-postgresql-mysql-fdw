@@ -3,6 +3,8 @@
 (
     set -eu
 
+    service mysql start
+
     # Create the MySQL test database and user.
     echo "== creating the MySQL test database"
     cat $PWD/debian/mysql.testschema.sql | mysql -vv --user=root mysql
@@ -16,5 +18,7 @@ status=$?
     echo "== dropping the MySQL test database"
     echo "DROP USER 'foo'@'127.0.0.1'; DROP DATABASE testdb;" \
      | mysql -vv --user=root mysql
+
+    service mysql stop
 )
 exit $status
