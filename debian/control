@@ -21,15 +21,6 @@ Description: documentation for mysql-fdw
  .
  This package contains the documentation.
 
-Package: postgresql-9.3-mysql-fdw
-Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, postgresql-9.3
-Description: Postgres 9.3 Foreign Data Wrapper for MySQL
- postgresql-mysql-fdw is a PostgreSQL extension implementing a Foreign Data
- Wrapper (FDW) to access MySQL data from PostgreSQL.
- .
- This package is for PostgreSQL 9.3.
-
 Package: postgresql-9.4-mysql-fdw
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, postgresql-9.4

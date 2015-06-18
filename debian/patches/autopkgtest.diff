@@ -1,3 +1,7 @@
+Description: Use database contrib_regression rather than postgres
+Forwarded: no
+Author: Markus Wanner <markus.wanner@datahouse.ch>
+Last-Update: 2015-06-18
 --- a/sql/mysql_fdw.sql
 +++ b/sql/mysql_fdw.sql
 @@ -1,4 +1,4 @@
