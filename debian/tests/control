@@ -1,0 +1,3 @@
+Depends: @, postgresql-server-dev-all, libmysqlclient-dev, mysql-server
+Tests: installcheck
+Restrictions: needs-root allow-stderr
