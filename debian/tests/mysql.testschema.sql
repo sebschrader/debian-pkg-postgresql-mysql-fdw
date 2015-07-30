@@ -6,7 +6,7 @@ GRANT ALL PRIVILEGES ON testdb.* TO 'foo'@'127.0.0.1';
 
 CREATE TABLE department(
   department_id INT AUTO_INCREMENT PRIMARY KEY,
-  departement_name VARCHAR(20)
+  department_name VARCHAR(20)
 );
 
 CREATE TABLE employee(

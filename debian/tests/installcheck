@@ -1,5 +1,9 @@
 #!/bin/sh
 
+. /usr/share/postgresql-common/pgcommon.sh
+locale_gen en_US.UTF-8 UTF-8
+export LANG=en_US.UTF-8
+
 (
     set -eu
 
@@ -7,9 +11,9 @@
 
     # Create the MySQL test database and user.
     echo "== creating the MySQL test database"
-    cat $PWD/debian/mysql.testschema.sql | mysql -vv --user=root mysql
+    cat debian/tests/mysql.testschema.sql | mysql --defaults-file="/etc/mysql/debian.cnf" -v mysql
 
-    pg_buildext -i '--auth-local=trust' installcheck
+    UNSHARED=no pg_buildext installcheck
 )
 status=$?
 
@@ -17,7 +21,7 @@ status=$?
     # Cleanup the MySQL test database (even in case of an error above)
     echo "== dropping the MySQL test database"
     echo "DROP USER 'foo'@'127.0.0.1'; DROP DATABASE testdb;" \
-     | mysql -vv --user=root mysql
+     | mysql --defaults-file="/etc/mysql/debian.cnf" -v mysql
 
     service mysql stop
 )
