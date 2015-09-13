@@ -1,5 +1,5 @@
-postgresql-mysql-fdw (2.0.1-1) UNRELEASED; urgency=low
+postgresql-mysql-fdw (2.0.1-1) unstable; urgency=low
 
   * Initial release (Closes: #785453).
 
- -- Markus Wanner <markus.wanner@datahouse.ch>  Wed, 27 May 2015 20:07:16 +0200
+ -- Markus Wanner <markus.wanner@datahouse.ch>  Sun, 13 Sep 2015 21:12:59 +0200
