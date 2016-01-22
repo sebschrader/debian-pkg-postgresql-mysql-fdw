@@ -1,0 +1,331 @@
+--- /dev/null
++++ b/expected/mysql_fdw_1.out
+@@ -0,0 +1,328 @@
++\c postgres postgres
++CREATE EXTENSION mysql_fdw;
++CREATE SERVER mysql_svr FOREIGN DATA WRAPPER mysql_fdw;
++CREATE USER MAPPING FOR postgres SERVER mysql_svr OPTIONS(username 'foo', password 'bar');
++CREATE FOREIGN TABLE department(department_id int, department_name text) SERVER mysql_svr OPTIONS(dbname 'testdb', table_name 'department');
++CREATE FOREIGN TABLE employee(emp_id int, emp_name text, emp_dept_id int) SERVER mysql_svr OPTIONS(dbname 'testdb', table_name 'employee');
++CREATE FOREIGN TABLE empdata(emp_id int, emp_dat bytea) SERVER mysql_svr OPTIONS(dbname 'testdb', table_name 'empdata');
++SELECT * FROM department LIMIT 10;
++ department_id | department_name 
++---------------+-----------------
++(0 rows)
++
++SELECT * FROM employee LIMIT 10;
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++(0 rows)
++
++SELECT * FROM empdata LIMIT 10;
++ emp_id | emp_dat 
++--------+---------
++(0 rows)
++
++INSERT INTO department VALUES(generate_series(1,100), 'dept - ' || generate_series(1,100));
++INSERT INTO employee VALUES(generate_series(1,100), 'emp - ' || generate_series(1,100), generate_series(1,100));
++INSERT INTO empdata  VALUES(1, decode ('01234567', 'hex'));
++SELECT count(*) FROM department;
++ count 
++-------
++   100
++(1 row)
++
++SELECT count(*) FROM employee;
++ count 
++-------
++   100
++(1 row)
++
++SELECT count(*) FROM empdata;
++ count 
++-------
++     1
++(1 row)
++
++EXPLAIN (COSTS FALSE) SELECT * FROM department d, employee e WHERE d.department_id = e.emp_dept_id LIMIT 10;
++                       QUERY PLAN                       
++--------------------------------------------------------
++ Limit
++   ->  Nested Loop
++         Join Filter: (d.department_id = e.emp_dept_id)
++         ->  Foreign Scan on department d
++         ->  Materialize
++               ->  Foreign Scan on employee e
++(6 rows)
++
++EXPLAIN (COSTS FALSE) SELECT * FROM department d, employee e WHERE d.department_id IN (SELECT department_id FROM department) LIMIT 10;
++                               QUERY PLAN                                
++-------------------------------------------------------------------------
++ Limit
++   ->  Nested Loop
++         ->  Nested Loop Semi Join
++               Join Filter: (d.department_id = department.department_id)
++               ->  Foreign Scan on department d
++               ->  Materialize
++                     ->  Foreign Scan on department
++         ->  Materialize
++               ->  Foreign Scan on employee e
++(9 rows)
++
++SELECT * FROM department d, employee e WHERE d.department_id = e.emp_dept_id LIMIT 10;
++ department_id | department_name | emp_id | emp_name  | emp_dept_id 
++---------------+-----------------+--------+-----------+-------------
++           100 | dept - 100      |    100 | emp - 100 |         100
++            99 | dept - 99       |     99 | emp - 99  |          99
++            98 | dept - 98       |     98 | emp - 98  |          98
++            97 | dept - 97       |     97 | emp - 97  |          97
++            96 | dept - 96       |     96 | emp - 96  |          96
++            95 | dept - 95       |     95 | emp - 95  |          95
++            94 | dept - 94       |     94 | emp - 94  |          94
++            93 | dept - 93       |     93 | emp - 93  |          93
++            92 | dept - 92       |     92 | emp - 92  |          92
++            91 | dept - 91       |     91 | emp - 91  |          91
++(10 rows)
++
++SELECT * FROM department d, employee e WHERE d.department_id IN (SELECT department_id FROM department) LIMIT 10;
++ department_id | department_name | emp_id | emp_name | emp_dept_id 
++---------------+-----------------+--------+----------+-------------
++           100 | dept - 100      |     99 | emp - 99 |          99
++           100 | dept - 100      |     98 | emp - 98 |          98
++           100 | dept - 100      |     97 | emp - 97 |          97
++           100 | dept - 100      |     96 | emp - 96 |          96
++           100 | dept - 100      |     95 | emp - 95 |          95
++           100 | dept - 100      |     94 | emp - 94 |          94
++           100 | dept - 100      |     93 | emp - 93 |          93
++           100 | dept - 100      |     92 | emp - 92 |          92
++           100 | dept - 100      |     91 | emp - 91 |          91
++           100 | dept - 100      |     81 | emp - 81 |          81
++(10 rows)
++
++SELECT * FROM empdata;
++ emp_id |  emp_dat   
++--------+------------
++      1 | \x01234567
++(1 row)
++
++DELETE FROM employee WHERE emp_id = 10;
++SELECT COUNT(*) FROM department LIMIT 10;
++ count 
++-------
++   100
++(1 row)
++
++SELECT COUNT(*) FROM employee WHERE emp_id = 10;
++ count 
++-------
++     0
++(1 row)
++
++UPDATE employee SET emp_name = 'Updated emp' WHERE emp_id = 20;
++SELECT emp_id, emp_name FROM employee WHERE emp_name like 'Updated emp';
++ emp_id |  emp_name   
++--------+-------------
++     20 | Updated emp
++(1 row)
++
++UPDATE empdata SET emp_dat = decode ('0123', 'hex');
++SELECT * FROM empdata;
++ emp_id | emp_dat 
++--------+---------
++      1 | \x0123
++(1 row)
++
++SELECT * FROM employee LIMIT 10;
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++     99 | emp - 99 |          99
++     98 | emp - 98 |          98
++     97 | emp - 97 |          97
++     96 | emp - 96 |          96
++     95 | emp - 95 |          95
++     94 | emp - 94 |          94
++     93 | emp - 93 |          93
++     92 | emp - 92 |          92
++     91 | emp - 91 |          91
++     81 | emp - 81 |          81
++(10 rows)
++
++SELECT * FROM employee WHERE emp_id IN (1);
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++      1 | emp - 1  |           1
++(1 row)
++
++SELECT * FROM employee WHERE emp_id IN (1,3,4,5);
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++      1 | emp - 1  |           1
++      3 | emp - 3  |           3
++      4 | emp - 4  |           4
++      5 | emp - 5  |           5
++(4 rows)
++
++SELECT * FROM employee WHERE emp_id IN (10000,1000);
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++(0 rows)
++
++SELECT * FROM employee WHERE emp_id NOT IN (1) LIMIT 5;
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++     99 | emp - 99 |          99
++     98 | emp - 98 |          98
++     97 | emp - 97 |          97
++     96 | emp - 96 |          96
++     95 | emp - 95 |          95
++(5 rows)
++
++SELECT * FROM employee WHERE emp_id NOT IN (1,3,4,5) LIMIT 5;
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++     99 | emp - 99 |          99
++     98 | emp - 98 |          98
++     97 | emp - 97 |          97
++     96 | emp - 96 |          96
++     95 | emp - 95 |          95
++(5 rows)
++
++SELECT * FROM employee WHERE emp_id NOT IN (10000,1000) LIMIT 5;
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++     99 | emp - 99 |          99
++     98 | emp - 98 |          98
++     97 | emp - 97 |          97
++     96 | emp - 96 |          96
++     95 | emp - 95 |          95
++(5 rows)
++
++SELECT * FROM employee WHERE emp_id NOT IN (SELECT emp_id FROM employee WHERE emp_id IN (1,10));
++ emp_id |  emp_name   | emp_dept_id 
++--------+-------------+-------------
++     99 | emp - 99    |          99
++     98 | emp - 98    |          98
++     97 | emp - 97    |          97
++     96 | emp - 96    |          96
++     95 | emp - 95    |          95
++     94 | emp - 94    |          94
++     93 | emp - 93    |          93
++     92 | emp - 92    |          92
++     91 | emp - 91    |          91
++     81 | emp - 81    |          81
++     90 | emp - 90    |          90
++     89 | emp - 89    |          89
++     88 | emp - 88    |          88
++     87 | emp - 87    |          87
++     86 | emp - 86    |          86
++     85 | emp - 85    |          85
++     84 | emp - 84    |          84
++     83 | emp - 83    |          83
++     82 | emp - 82    |          82
++     80 | emp - 80    |          80
++     79 | emp - 79    |          79
++     78 | emp - 78    |          78
++     77 | emp - 77    |          77
++     76 | emp - 76    |          76
++     75 | emp - 75    |          75
++     74 | emp - 74    |          74
++     73 | emp - 73    |          73
++     72 | emp - 72    |          72
++     71 | emp - 71    |          71
++     70 | emp - 70    |          70
++     69 | emp - 69    |          69
++     68 | emp - 68    |          68
++     67 | emp - 67    |          67
++     66 | emp - 66    |          66
++     65 | emp - 65    |          65
++     64 | emp - 64    |          64
++     63 | emp - 63    |          63
++     62 | emp - 62    |          62
++     61 | emp - 61    |          61
++     60 | emp - 60    |          60
++     59 | emp - 59    |          59
++     58 | emp - 58    |          58
++     57 | emp - 57    |          57
++     56 | emp - 56    |          56
++     55 | emp - 55    |          55
++     54 | emp - 54    |          54
++     53 | emp - 53    |          53
++     52 | emp - 52    |          52
++     51 | emp - 51    |          51
++     50 | emp - 50    |          50
++     49 | emp - 49    |          49
++     48 | emp - 48    |          48
++     47 | emp - 47    |          47
++     46 | emp - 46    |          46
++     45 | emp - 45    |          45
++     44 | emp - 44    |          44
++     43 | emp - 43    |          43
++     42 | emp - 42    |          42
++     41 | emp - 41    |          41
++     40 | emp - 40    |          40
++     39 | emp - 39    |          39
++     38 | emp - 38    |          38
++     37 | emp - 37    |          37
++     36 | emp - 36    |          36
++     35 | emp - 35    |          35
++     34 | emp - 34    |          34
++     33 | emp - 33    |          33
++     32 | emp - 32    |          32
++     31 | emp - 31    |          31
++     30 | emp - 30    |          30
++     29 | emp - 29    |          29
++     28 | emp - 28    |          28
++     27 | emp - 27    |          27
++     26 | emp - 26    |          26
++     25 | emp - 25    |          25
++     24 | emp - 24    |          24
++     23 | emp - 23    |          23
++     22 | emp - 22    |          22
++     21 | emp - 21    |          21
++     20 | Updated emp |          20
++     19 | emp - 19    |          19
++     18 | emp - 18    |          18
++     17 | emp - 17    |          17
++     16 | emp - 16    |          16
++     15 | emp - 15    |          15
++     14 | emp - 14    |          14
++     13 | emp - 13    |          13
++     12 | emp - 12    |          12
++     11 | emp - 11    |          11
++      9 | emp - 9     |           9
++      8 | emp - 8     |           8
++      7 | emp - 7     |           7
++      6 | emp - 6     |           6
++      5 | emp - 5     |           5
++      4 | emp - 4     |           4
++      3 | emp - 3     |           3
++      2 | emp - 2     |           2
++    100 | emp - 100   |         100
++(98 rows)
++
++SELECT * FROM employee WHERE emp_name NOT IN ('emp - 1', 'emp - 2') LIMIT 5;
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++     99 | emp - 99 |          99
++     98 | emp - 98 |          98
++     97 | emp - 97 |          97
++     96 | emp - 96 |          96
++     95 | emp - 95 |          95
++(5 rows)
++
++SELECT * FROM employee WHERE emp_name NOT IN ('emp - 10') LIMIT 5;
++ emp_id | emp_name | emp_dept_id 
++--------+----------+-------------
++     99 | emp - 99 |          99
++     98 | emp - 98 |          98
++     97 | emp - 97 |          97
++     96 | emp - 96 |          96
++     95 | emp - 95 |          95
++(5 rows)
++
++DELETE FROM employee;
++DELETE FROM department;
++DELETE FROM empdata;
++DROP FOREIGN TABLE department;
++DROP FOREIGN TABLE employee;
++DROP FOREIGN TABLE empdata;
++DROP USER MAPPING FOR postgres SERVER mysql_svr;
++DROP SERVER mysql_svr;
++DROP EXTENSION mysql_fdw CASCADE;
