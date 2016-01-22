@@ -13,7 +13,7 @@ export LANG=en_US.UTF-8
     echo "== creating the MySQL test database"
     cat debian/tests/mysql.testschema.sql | mysql --defaults-file="/etc/mysql/debian.cnf" -v mysql
 
-    UNSHARED=no pg_buildext installcheck
+    PG_VIRTUALENV_UNSHARE="" pg_buildext installcheck
 )
 status=$?
 

@@ -1,6 +1,7 @@
 postgresql-mysql-fdw (2.1.2-1) unstable; urgency=medium
 
   * New upstream version with 9.5 support.
+  * debian/tests: Add new table and disable unshare.
 
  -- Christoph Berg <myon@debian.org>  Fri, 22 Jan 2016 19:11:11 +0100
 
