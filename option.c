@@ -38,6 +38,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+#include "utils/lsyscache.h"
 
 #include "optimizer/pathnode.h"
 #include "optimizer/restrictinfo.h"
@@ -62,10 +63,14 @@ static struct MySQLFdwOption valid_options[] =
 	/* Connection options */
 	{ "host",           ForeignServerRelationId },
 	{ "port",           ForeignServerRelationId },
+	{ "init_command",   ForeignServerRelationId },
 	{ "username",       UserMappingRelationId },
 	{ "password",       UserMappingRelationId },
 	{ "dbname",         ForeignTableRelationId },
 	{ "table_name",     ForeignTableRelationId },
+	{ "secure_auth",    ForeignServerRelationId },
+	{ "max_blob_size",  ForeignTableRelationId },
+	{ "use_remote_estimate",    ForeignServerRelationId },
 
 	/* Sentinel */
 	{ NULL,			InvalidOid }
@@ -146,10 +151,10 @@ mysql_is_valid_option(const char *option, Oid context)
  * Fetch the options for a mysql_fdw foreign table.
  */
 mysql_opt*
-mysql_get_options(Oid foreigntableid)
+mysql_get_options(Oid foreignoid)
 {
-	ForeignTable *f_table;
-	ForeignServer *f_server;
+	ForeignTable *f_table = NULL;
+	ForeignServer *f_server = NULL;
 	UserMapping *f_mapping;
 	List *options;
 	ListCell *lc;
@@ -161,14 +166,30 @@ mysql_get_options(Oid foreigntableid)
 	/*
 	 * Extract options from FDW objects.
 	 */
-	f_table = GetForeignTable(foreigntableid);
-	f_server = GetForeignServer(f_table->serverid);
-	f_mapping = GetUserMapping(GetUserId(), f_table->serverid);
+	PG_TRY();
+	{
+		f_table = GetForeignTable(foreignoid);
+		f_server = GetForeignServer(f_table->serverid);
+	}
+	PG_CATCH();
+	{
+		f_table = NULL;
+		f_server = GetForeignServer(foreignoid);
+	}
+	PG_END_TRY();
+
+	f_mapping = GetUserMapping(GetUserId(), f_server->serverid);
 
 	options = NIL;
-	options = list_concat(options, f_table->options);
+	if (f_table)
+		options = list_concat(options, f_table->options);
 	options = list_concat(options, f_server->options);
 	options = list_concat(options, f_mapping->options);
+
+	/* Default secure authentication is true */
+	opt->svr_sa = true;
+
+	opt->use_remote_estimate = false;
 
 	/* Loop through the options, and get the server/port */
 	foreach(lc, options)
@@ -192,6 +213,19 @@ mysql_get_options(Oid foreigntableid)
 
 		if (strcmp(def->defname, "table_name") == 0)
 			opt->svr_table = defGetString(def);
+
+		if (strcmp(def->defname, "secure_auth") == 0)
+			opt->svr_sa = defGetBoolean(def);
+		
+		if (strcmp(def->defname, "init_command") == 0)
+			opt->svr_init_command = defGetString(def);
+
+		if (strcmp(def->defname, "max_blob_size") == 0)
+                       opt->max_blob_size = strtoul(defGetString(def), NULL, 0);
+
+		if (strcmp(def->defname, "use_remote_estimate") == 0)
+			opt->use_remote_estimate = defGetBoolean(def);
+
 	}
 	/* Default values, if required */
 	if (!opt->svr_address)
@@ -199,6 +233,9 @@ mysql_get_options(Oid foreigntableid)
 
 	if (!opt->svr_port)
 		opt->svr_port = MYSQL_PORT;
+
+	if (!opt->svr_table && f_table)
+		opt->svr_table = get_rel_name(foreignoid);
 
 	return opt;
 }
