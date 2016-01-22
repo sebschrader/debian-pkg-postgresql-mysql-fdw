@@ -25,4 +25,6 @@ status=$?
 
     service mysql stop
 )
+# "service" insists on upstart running on precise, ignore failures here
+[ "$(lsb_release -cs || :)" = "precise" ] && exit 0
 exit $status
