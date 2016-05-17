@@ -1,3 +1,10 @@
+postgresql-mysql-fdw (2.1.2-2) unstable; urgency=medium
+
+  * Add libmysqlclient-dev to Depends. libmysqlclient.so is loaded at runtime
+    using dlopen(). Spotted by Lev Dragunov, thanks!
+
+ -- Christoph Berg <myon@debian.org>  Tue, 17 May 2016 23:45:59 +0200
+
 postgresql-mysql-fdw (2.1.2-1) unstable; urgency=medium
 
   * New upstream version with 9.5 support.
