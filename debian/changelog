@@ -1,3 +1,9 @@
+postgresql-mysql-fdw (2.1.2-3) unstable; urgency=medium
+
+  * Team upload with 9.6 support.
+
+ -- Christoph Berg <christoph.berg@credativ.de>  Tue, 27 Sep 2016 12:37:38 +0200
+
 postgresql-mysql-fdw (2.1.2-2) unstable; urgency=medium
 
   * Add libmysqlclient-dev to Depends. libmysqlclient.so is loaded at runtime

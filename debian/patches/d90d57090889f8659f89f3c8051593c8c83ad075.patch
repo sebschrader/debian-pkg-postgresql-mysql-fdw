@@ -1,0 +1,47 @@
+From d90d57090889f8659f89f3c8051593c8c83ad075 Mon Sep 17 00:00:00 2001
+From: Satoshi Nagayasu <snaga@uptime.jp>
+Date: Fri, 22 Jul 2016 17:15:19 +0900
+Subject: [PATCH] Add PostgreSQL 9.6 support.
+
+---
+ mysql_fdw.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/mysql_fdw.c b/mysql_fdw.c
+index 53b359b..bcd07ab 100644
+--- a/mysql_fdw.c
++++ b/mysql_fdw.c
+@@ -737,7 +737,11 @@ mysqlGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntablei
+ 
+ 	_mysql_query(conn, "SET sql_mode='ANSI_QUOTES'");
+ 
++#if PG_VERSION_NUM >= 90600
++	pull_varattnos((Node *) baserel->reltarget->exprs, baserel->relid, &attrs_used);
++#else
+ 	pull_varattnos((Node *) baserel->reltargetlist, baserel->relid, &attrs_used);
++#endif
+ 
+ 	foreach(lc, baserel->baserestrictinfo)
+ 	{
+@@ -749,7 +753,11 @@ mysqlGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntablei
+ 			fpinfo->local_conds = lappend(fpinfo->local_conds, ri);
+ 	}
+ 
++#if PG_VERSION_NUM >= 90600
++	pull_varattnos((Node *) baserel->reltarget->exprs, baserel->relid, &fpinfo->attrs_used);
++#else
+ 	pull_varattnos((Node *) baserel->reltargetlist, baserel->relid, &fpinfo->attrs_used);
++#endif
+ 	foreach(lc, fpinfo->local_conds)
+ 	{
+ 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+@@ -948,6 +956,9 @@ mysqlGetForeignPaths(PlannerInfo *root,RelOptInfo *baserel,Oid foreigntableid)
+ 	/* Create a ForeignPath node and add it as only possible path */
+ 	add_path(baserel, (Path *)
+ 			 create_foreignscan_path(root, baserel,
++#if PG_VERSION_NUM >= 90600
++									 NULL,		/* default pathtarget */
++#endif
+ 									 baserel->rows,
+ 									 startup_cost,
+ 									 total_cost,
